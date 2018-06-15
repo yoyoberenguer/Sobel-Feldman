@@ -20,10 +20,10 @@ class Sobel4:
 
     def __init__(self, surface_, array_):
 
-        self.gx = numpy.array(([-1, 0, 1],
+        self.gy = numpy.array(([-1, 0, 1],
                                [-2, 0, 2],
                                [-1, 0, 1]))
-        self.gy = numpy.array(([-1, -2, -1],
+        self.gx = numpy.array(([-1, -2, -1],
                                [0, 0, 0],
                                [1, 2, 1]))
         self.kernel_half = 1
@@ -35,33 +35,30 @@ class Sobel4:
 
     def run(self):
 
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1]-2):
 
-            for x in range(0, self.shape[0]):
+            for x in range(2, self.shape[0]-2):
                 r_gx, r_gy = 0, 0
                 for kernel_offset_y in range(-self.kernel_half, self.kernel_half + 1):
 
                     for kernel_offset_x in range(-self.kernel_half, self.kernel_half + 1):
+
                         xx = x + kernel_offset_x
                         yy = y + kernel_offset_y
+                        color = self.surface.get_at((xx, yy))
+                        # print(kernel_offset_y, kernel_offset_x)
+                        if kernel_offset_x != 0:
 
-                        try:
-                            color = self.surface.get_at((xx, yy))
                             k = self.gx[kernel_offset_x + self.kernel_half,
                                         kernel_offset_y + self.kernel_half]
                             r_gx += color[0] * k
+
+
+                        if kernel_offset_y != 0:
                             k = self.gy[kernel_offset_x + self.kernel_half,
                                         kernel_offset_y + self.kernel_half]
                             r_gy += color[0] * k
 
-                        except IndexError:
-
-                            k = self.gx[kernel_offset_x + self.kernel_half,
-                                        kernel_offset_y + self.kernel_half]
-                            r_gx += 128 * k
-                            k = self.gy[kernel_offset_x + self.kernel_half,
-                                        kernel_offset_y + self.kernel_half]
-                            r_gy += 128 * k
 
                 magnitude = math.sqrt(r_gx ** 2 + r_gy ** 2)
                 # update the pixel if the magnitude is above threshold else black pixel
@@ -80,9 +77,9 @@ class Sobel3:
 
         # Gx vertical / horizontal
         self.gx_v = numpy.array(([1, 2, 1]))
-        self.gx_h = numpy.array(([1, 0, -1]))
+        self.gx_h = numpy.array(([-1, 0, 1]))
         # Gy vertical/ horizontal
-        self.gy_v = numpy.array(([1, 0, -1]))
+        self.gy_v = numpy.array(([-1, 0, 1]))
         self.gy_h = numpy.array(([1, 2, 1]))
 
         self.array = array_
@@ -94,33 +91,27 @@ class Sobel3:
         self.source_array = numpy.zeros((self.shape[0], self.shape[1], 3))
         self.array_gxh = numpy.zeros((self.shape[0], self.shape[1], 3))
         self.array_gyh = numpy.zeros((self.shape[0], self.shape[1], 3))
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1]-2):
 
-            for x in range(0, self.shape[0]):
-
-                try:
-                    # Horizontal kernel Gx_h and Gy_h
-                    data = self.array[x - 1:x + 2, y, :1].reshape(3)
-                    h12 = sum(numpy.multiply(data, self.gx_h))
-                    h13 = sum(numpy.multiply(data, self.gy_h))
-                except (ValueError, IndexError) as e:
-                    h12 = 0
-                    h13 = 0
+            for x in range(2, self.shape[0]-2):
+                # Horizontal kernel Gx_h and Gy_h
+                data = self.array[x - 1:x + 2, y, :1].reshape(3)
+                h12 = sum(numpy.multiply(data, self.gx_h))
+                h13 = sum(numpy.multiply(data, self.gy_h))
                 self.array_gxh[x, y] = h12
                 self.array_gyh[x, y] = h13
 
     def vertical(self):
         self.source_array = numpy.zeros((self.shape[0], self.shape[1], 3))
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1]-2):
 
-            for x in range(0, self.shape[0]):
+            for x in range(2, self.shape[0]-2):
                 # Apply both kernels at once for each pixels
-                try:
-                    # Vertical kernel Gx_v and gy_v
-                    v1 = sum(numpy.multiply(self.array_gxh[x, y - 1: y + 2, :1].reshape(3), self.gx_v))
-                    v2 = sum(numpy.multiply(self.array_gyh[x, y - 1: y + 2, :1].reshape(3), self.gy_v))
-                except (ValueError, IndexError) as e:
-                    v1, v2 = 0, 0
+
+                # Vertical kernel Gx_v and gy_v
+                v1 = sum(numpy.multiply(self.array_gxh[x, y - 1: y + 2, :1].reshape(3), self.gx_v))
+                v2 = sum(numpy.multiply(self.array_gyh[x, y - 1: y + 2, :1].reshape(3), self.gy_v))
+
                 magnitude = math.sqrt(v1 ** 2 + v2 ** 2)
                 # update the pixel if the magnitude is above threshold else black pixel
                 self.source_array[x, y] = magnitude if magnitude > self.threshold else 0
@@ -167,9 +158,11 @@ class Sobel2:
 
     def __init__(self, surface_, array_):
 
+        # kernel flipped for the convolution
         self.gx = numpy.array(([-1, 0, 1],
                                [-2, 0, 2],
                                [-1, 0, 1]))
+        # kernel flipped
         self.gy = numpy.array(([-1, -2, -1],
                                [0, 0, 0],
                                [1, 2, 1]))
@@ -178,24 +171,21 @@ class Sobel2:
         self.shape = array_.shape
         self.array = array_
         self.source_array = numpy.zeros((self.shape[0], self.shape[1], 3))
-        # Threshold at 50%
         self.threshold = 0
 
     def run(self):
 
         # Starting at row 1, finishing at shape[0] - 1 due to the size of the kernel
         # and to avoid IndexError
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1]-2):
 
-            for x in range(0, self.shape[0]):
+            for x in range(2, self.shape[0]-2):
                 # Apply both kernels at once for each pixels
-                try:
-                    # Horizontal kernel Gx
-                    s1 = sum(sum(numpy.multiply(self.array[x - 1:x + 2, y - 1:y + 2][0], self.gx)))
-                    # Vertical kernel Gy
-                    s2 = sum(sum(numpy.multiply(self.array[x - 1:x + 2, y - 1:y + 2][0], self.gy)))
-                except:
-                    s1, s2 = 0, 0
+                # Horizontal kernel Gx
+                data = self.array[x - 1:x + 2, y - 1:y + 2][:, :, 0]
+                s1 = sum(sum(numpy.multiply(data, self.gx)))
+                # Vertical kernel Gy
+                s2 = sum(sum(numpy.multiply(data, self.gy)))
                 magnitude = math.sqrt(s1 ** 2 + s2 ** 2)
                 # update the pixel if the magnitude is above threshold else black pixel
                 self.source_array[x, y] = magnitude if magnitude > self.threshold else 0
@@ -203,7 +193,6 @@ class Sobel2:
         numpy.putmask(self.source_array, self.source_array > 255, 255)
         numpy.putmask(self.source_array, self.source_array < 0, 0)
         return self.source_array
-
 
 
 class Sobel:
@@ -238,12 +227,12 @@ class Sobel:
 
     def __init__(self, surface_, array_):
 
-        self.sobel_h = numpy.array(([-1, 0, 1],
-                               [-2, 0, 2],
-                               [-1, 0, 1]))
-        self.sobel_v = numpy.array(([-1, -2, -1],
-                               [0, 0, 0],
-                               [1, 2, 1]))
+        self.sobel_v = numpy.array(([-1, 0, 1],
+                                    [-2, 0, 2],
+                                    [-1, 0, 1]))
+        self.sobel_h = numpy.array(([-1, -2, -1],
+                                    [0, 0, 0],
+                                    [1, 2, 1]))
         self.kernel_half = 1
         self.array = array_
         self.surface = surface_
@@ -254,65 +243,50 @@ class Sobel:
 
     def horizontal(self):
         self.source_array = numpy.zeros((self.shape[0], self.shape[1], 3))
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1] - 2):
 
-            for x in range(0, self.shape[0]):
+            for x in range(2, self.shape[0] - 2):
 
                 r = 0
 
                 for kernel_offset_y in range(-self.kernel_half, self.kernel_half + 1):
 
-                    for kernel_offset_x in range(-self.kernel_half, self.kernel_half + 1):
-
+                    for kernel_offset_x in range(-self.kernel_half, self.kernel_half + 1, 2):
                         xx = x + kernel_offset_x
                         yy = y + kernel_offset_y
+                        k = self.sobel_h[kernel_offset_x + self.kernel_half,
+                                         kernel_offset_y + self.kernel_half]
 
-                        try:
-                            color = self.surface.get_at((xx, yy))
-                            k = self.sobel_h[kernel_offset_x + self.kernel_half,
-                                             kernel_offset_y + self.kernel_half]
-                            r += color[0] * k
+                        color = self.surface.get_at((xx, yy))
 
-                        except IndexError:
+                        r += color[0] * k
 
-                            k = self.sobel_h[kernel_offset_x + self.kernel_half,
-                                             kernel_offset_y + self.kernel_half]
-                            r += 128 * k
-                            pass
-
-                self.source_array[x][y] = r, r, r
+                self.source_array[x][y] = r
 
         return self.source_array
 
     def vertical(self):
         self.source_array = numpy.zeros((self.shape[0], self.shape[1], 3))
-        for y in range(0, self.shape[1]):
+        for y in range(2, self.shape[1] - 2):
 
-            for x in range(0, self.shape[0]):
+            for x in range(2, self.shape[0] - 2):
 
                 r = 0
 
-                for kernel_offset_y in range(-self.kernel_half, self.kernel_half + 1):
+                for kernel_offset_y in range(-self.kernel_half, self.kernel_half + 1, 2):
 
                     for kernel_offset_x in range(-self.kernel_half, self.kernel_half + 1):
-
                         xx = x + kernel_offset_x
                         yy = y + kernel_offset_y
+                        k = self.sobel_v[kernel_offset_x + self.kernel_half,
+                                         kernel_offset_y + self.kernel_half]
 
-                        try:
-                            color = self.surface.get_at((xx, yy))
-                            k = self.sobel_v[kernel_offset_x + self.kernel_half,
-                                             kernel_offset_y + self.kernel_half]
+                        color = self.surface.get_at((xx, yy))
 
-                            r += color[0] * k
 
-                        except IndexError:
+                        r += color[0] * k
 
-                            k = self.sobel_v[kernel_offset_y + self.kernel_half,
-                                             kernel_offset_x + self.kernel_half]
-                            r += 128 * k
-                            pass
-                self.source_array[x][y] = r, r, r
+                self.source_array[x][y] = r
 
         return self.source_array
 
@@ -331,6 +305,7 @@ class Sobel:
 
     def run(self):
         horizontal = self.horizontal()
+
         vertical = self.vertical()
         return self.magnitude(horizontal, vertical)
 
@@ -347,13 +322,20 @@ if __name__ == '__main__':
     # Texture re-scale to create extra data (padding) on each sides
     PADDING = pygame.transform.smoothscale(TEXTURE1, (SIZE[0] + 8, (SIZE[1] >> 1) + 8))
 
-    # 13 seconds for 800x300
+    # 9.3 seconds for 800x300
+    # pygame.display.set_caption('Sobel algorithm 1')
     # Sob = Sobel(TEXTURE1, pygame.surfarray.array3d(TEXTURE1))
-    # 8 seconds for 800x300
+
+    # 7.9 seconds for 800x300
+    # pygame.display.set_caption('Sobel algorithm 1 2')
     # Sob = Sobel2(TEXTURE1, pygame.surfarray.array3d(TEXTURE1))
-    # 10.9 seconds for 800x300
+
+    # 11.3 seconds for 800x300
+    # pygame.display.set_caption('Sobel algorithm 1 3')
     # Sob = Sobel3(TEXTURE1, pygame.surfarray.array3d(TEXTURE1))
+
     # 7.5 seconds for 800x300
+    # pygame.display.set_caption('Sobel algorithm 1 3')
     Sob = Sobel4(TEXTURE1, pygame.surfarray.array3d(TEXTURE1))
 
     FRAME = 0
@@ -391,6 +373,15 @@ if __name__ == '__main__':
 
         t = time.time()
         array = Sob.run()
+        # import hashlib
+        # Checking hashes between 2 different method
+        # hash = hashlib.md5()
+        # hash.update(array.copy('C'))
+        # array1 = Sob1.run()
+        # hash_ = hashlib.md5()
+        # hash_.update(array1.copy('C'))
+
+        # print(hash.hexdigest() == hash_.hexdigest())
         print(time.time() - t)
 
         surface = pygame.surfarray.make_surface(array)
