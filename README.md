@@ -12,21 +12,21 @@ Technically, it is a discrete differentiation operator, computing an approximati
 # Formulation
 The operator uses two 3×3 kernels which are convolved with the original image to calculate approximations of the derivatives – one for horizontal changes, and one for vertical. If we define A as the source image, and Gx and Gy are two images which at each point contain the horizontal and vertical derivative approximations respectively, the computations are as follows:
 
-![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/Sobel1.png)
+![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/sobel1.png)
 
 where * here denotes the 2-dimensional signal processing convolution operation.
 Since the Sobel kernels can be decomposed as the products of an averaging and a differentiation kernel, they compute the gradient with smoothing. For example, 
 Gx can be written as
 
-![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/Sobe2.png)
+![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/sobel2.png)
 
 The x-coordinate is defined here as increasing in the "right"-direction, and the y-coordinate is defined as increasing in the "down"-direction. At each point in the image, the resulting gradient approximations can be combined to give the gradient magnitude, using:
 
-![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/Sobe3.png)
+![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/sobel3.png)
 
 Using this information, we can also calculate the gradient's direction:
 
-![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/Sobe4.png)
+![alt text](https://github.com/yoyoberenguer/Sobel-Feldman/blob/master/sobel4.png)
 
 where, for example, Θ is 0 for a vertical edge which is lighter on the right side.
 
