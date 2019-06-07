@@ -1,10 +1,10 @@
 # Sobel-Feldman, Prewitt, Canny 
-Sobel–Feldman filter
+**Sobel–Feldman filter**
 
 Python implementation of Sobel Feldman algorithm also known as edge detection algorithm.
 The program contains 4 differents algorithms (4 different methods Gx and Gy decomposed as the products of an averaging and a differentiation kernel etc) 
 
-WIKIPEDIA
+**WIKIPEDIA**
 
 The Sobel operator, sometimes called the Sobel–Feldman operator or Sobel filter, is used in image processing and computer vision, particularly within edge detection algorithms where it creates an image emphasising edges. It is named after Irwin Sobel and Gary Feldman, colleagues at the Stanford Artificial Intelligence Laboratory (SAIL). Sobel and Feldman presented the idea of an "Isotropic 3x3 Image Gradient Operator" at a talk at SAIL in 1968.
 Technically, it is a discrete differentiation operator, computing an approximation of the gradient of the image intensity function. At each point in the image, the result of the Sobel–Feldman operator is either the corresponding gradient vector or the norm of this vector. The Sobel–Feldman operator is based on convolving the image with a small, separable, and integer-valued filter in the horizontal and vertical directions and is therefore relatively inexpensive in terms of computations. On the other hand, the gradient approximation that it produces is relatively crude, in particular for high-frequency variations in the image.
